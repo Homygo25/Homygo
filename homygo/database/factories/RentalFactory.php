@@ -17,6 +17,7 @@ class RentalFactory extends Factory
     public function definition(): array
 {
     return [
+        'user_id'       => \App\Models\User::factory(),
         'title'         => $this->faker->sentence(3),
         'description'   => $this->faker->paragraph(),
         'barangay'      => $this->faker->randomElement(['Carmen', 'Nazareth', 'Kauswagan', 'Iponan']),

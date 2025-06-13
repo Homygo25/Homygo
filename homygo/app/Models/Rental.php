@@ -11,4 +11,12 @@ class Rental extends Model
 
     // Allow all fields to be mass assignable (use with caution)
     protected $guarded = [];
+
+    /**
+     * Get the user that owns the rental.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
