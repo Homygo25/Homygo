@@ -1,0 +1,24 @@
+/* -- Beige brand tokens -- */
+:root {
+  --bg: #f5efe6;
+  --text: #333331;
+  --accent: #325dab;
+}
+
+/* Global */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Reusable button */
+.btn-primary {
+  background-color: var(--accent);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
