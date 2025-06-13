@@ -9,6 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const form = useForm({
     name: '',
     email: '',
+    role: 'renter',
     password: '',
     password_confirmation: '',
 });
@@ -54,6 +55,17 @@ const submit = () => {
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="role" value="Register as" />
+
+                <select id="role" v-model="form.role" class="mt-1 block w-full border-gray-300 rounded">
+                    <option value="renter">Renter</option>
+                    <option value="landlord">Landlord</option>
+                </select>
+
+                <InputError class="mt-2" :message="form.errors.role" />
             </div>
 
             <div class="mt-4">

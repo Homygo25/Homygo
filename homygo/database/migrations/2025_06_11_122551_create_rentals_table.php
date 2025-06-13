@@ -11,10 +11,10 @@ return new class extends Migration {
             $table->string('title');
             $table->text('description')->nullable();
             $table->unsignedBigInteger('user_id');
-            $table->string('address');
             $table->string('barangay');
+            $table->string('property_type');
             $table->decimal('price', 10, 2);
-            $table->string('photo')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

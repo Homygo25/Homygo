@@ -22,6 +22,10 @@
             </select>
         </div>
         <div>
+            <label class="block mb-1 font-medium">Description</label>
+            <textarea name="description" class="w-full border rounded p-2" rows="4"></textarea>
+        </div>
+        <div>
             <label class="block mb-1 font-medium">Price (₱/month)</label>
             <input type="number" name="price" class="w-full border rounded p-2" required>
         </div>

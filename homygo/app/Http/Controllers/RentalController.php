@@ -34,6 +34,7 @@ class RentalController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'barangay' => 'required|string|max:255',
             'property_type' => 'required|string',
             'price' => 'required|numeric',
@@ -43,6 +44,8 @@ class RentalController extends Controller
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('rentals', 'public');
         }
+
+        $validated['user_id'] = $request->user()->id;
 
         Rental::create($validated);
         return redirect()->route('rentals.index')->with('success', 'Rental created successfully!');
