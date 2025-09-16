@@ -1,0 +1,16 @@
+{
+    "packagesToCopy": [
+        "bootstrap",
+        "choices.js",
+        "cleave.js",
+        "flatpickr",
+        "glightbox",
+        "img-comparison-slider",
+        "leaflet",
+        "list.js",
+        "nouislider",
+        "simplebar",
+        "swiper",
+        "timezz"
+    ]
+}
