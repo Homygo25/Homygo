@@ -5,9 +5,26 @@
 
 <!-- SEO Meta Tags -->
 
-<meta name="description" content="Finder - Directory & Listings Bootstrap HTML Template">
-<meta name="keywords" content="directory, listings, search, car dealer, real estate, city guide, business listings, medical directories, event listings, e-commerce, market, multipurpose, ui kit, light and dark mode, bootstrap, html5, css3, javascript, gallery, slider, mobile, pwa">
-<meta name="author" content="Createx Studio">
+<meta name="description" content="Homygo CDO - Your trusted local platform for real estate in Cagayan de Oro City. Find homes, apartments, condos, and commercial properties in the City of Golden Friendship.">
+<meta name="keywords" content="cagayan de oro real estate, cdo properties, houses for sale cdo, apartments for rent cdo, condos cagayan de oro, real estate philippines, cogon properties, lapasan real estate, nazareth houses, gusa apartments, pueblo de oro condos">
+<meta name="author" content="Homygo CDO">
+
+<!-- Local Business Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "Homygo CDO",
+  "description": "Trusted real estate platform serving Cagayan de Oro City",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Cagayan de Oro City",
+    "addressRegion": "Northern Mindanao",
+    "addressCountry": "Philippines"
+  },
+  "areaServed": "Cagayan de Oro City"
+}
+</script>
 
 <!-- Webmanifest + Favicon / App icons -->
 <meta name="mobile-web-app-capable" content="yes">

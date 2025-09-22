@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Global security headers middleware
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\TrackPropertyViews::class,
+        ]);
+        
+        // Register middleware aliases
+        $middleware->alias([
+            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

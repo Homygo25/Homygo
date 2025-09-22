@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Config;
 
 class SecurityAudit extends Command
 {
@@ -70,31 +69,31 @@ class SecurityAudit extends Command
         $checks = [
             'APP_DEBUG' => [
                 'current' => config('app.debug'),
-                'expected' => false,
+                'current' => \config('app.debug'),
                 'severity' => 'CRITICAL',
                 'message' => 'APP_DEBUG should be false in production'
             ],
             'APP_ENV' => [
                 'current' => config('app.env'),
-                'expected' => 'production',
+                'current' => \config('app.env'),
                 'severity' => 'HIGH',
                 'message' => 'APP_ENV should be "production" in production'
             ],
             'APP_KEY' => [
                 'current' => !empty(config('app.key')),
-                'expected' => true,
+                'current' => !empty(\config('app.key')),
                 'severity' => 'CRITICAL',
                 'message' => 'APP_KEY must be set'
             ],
             'SESSION_SECURE_COOKIE' => [
                 'current' => config('session.secure'),
-                'expected' => true,
+                'current' => \config('session.secure'),
                 'severity' => 'HIGH',
                 'message' => 'SESSION_SECURE_COOKIE should be true for HTTPS'
             ],
             'SESSION_HTTP_ONLY' => [
                 'current' => config('session.http_only'),
-                'expected' => true,
+                'current' => \config('session.http_only'),
                 'severity' => 'MEDIUM',
                 'message' => 'SESSION_HTTP_ONLY should be true'
             ]
@@ -103,9 +102,8 @@ class SecurityAudit extends Command
         foreach ($checks as $key => $check) {
             $passed = $check['current'] === $check['expected'];
             $this->addResult('Environment', $key, $passed, $check['severity'], $check['message']);
-            
             if (!$passed && $this->option('fix')) {
-                $this->attemptFix('environment', $key, $check);
+                $this->attemptFix('environment', $key);
             }
         }
     }
@@ -119,10 +117,10 @@ class SecurityAudit extends Command
 
         $checks = [
             storage_path() => ['writable' => true, 'severity' => 'CRITICAL'],
-            storage_path('logs') => ['writable' => true, 'severity' => 'HIGH'],
-            base_path('bootstrap/cache') => ['writable' => true, 'severity' => 'HIGH'],
-            base_path('.env') => ['readable' => true, 'public' => false, 'severity' => 'CRITICAL'],
-            public_path() => ['public' => true, 'severity' => 'INFO'],
+            \storage_path('logs') => ['writable' => true, 'severity' => 'HIGH'],
+            \base_path('bootstrap/cache') => ['writable' => true, 'severity' => 'HIGH'],
+            \base_path('.env') => ['readable' => true, 'public' => false, 'severity' => 'CRITICAL'],
+            \public_path() => ['public' => true, 'severity' => 'INFO'],
         ];
 
         foreach ($checks as $path => $requirements) {
@@ -166,8 +164,8 @@ class SecurityAudit extends Command
         $this->info('🔍 Checking Security Headers...');
 
         $middlewareFile = app_path('Http/Middleware/SecurityHeaders.php');
-        $exists = File::exists($middlewareFile);
-        
+        $middlewareFile = \app_path('Http/Middleware/SecurityHeaders.php');
+
         $this->addResult(
             'Security Headers',
             'SecurityHeaders Middleware',
@@ -178,7 +176,7 @@ class SecurityAudit extends Command
 
         if ($exists) {
             $content = File::get($middlewareFile);
-            
+
             $headers = [
                 'X-Content-Type-Options' => 'nosniff',
                 'X-Frame-Options' => 'SAMEORIGIN',
@@ -187,7 +185,7 @@ class SecurityAudit extends Command
                 'Content-Security-Policy' => 'default-src'
             ];
 
-            foreach ($headers as $header => $value) {
+            foreach ($headers as $header => $_) {
                 $hasHeader = strpos($content, $header) !== false;
                 $this->addResult(
                     'Security Headers',
@@ -214,7 +212,7 @@ class SecurityAudit extends Command
 
             // Check for default passwords or weak configurations
             $dbConfig = config('database.connections.' . config('database.default'));
-            
+            $dbConfig = \config('database.connections.' . \config('database.default'));
             if (isset($dbConfig['password']) && empty($dbConfig['password'])) {
                 $this->addResult('Database', 'Password', false, 'CRITICAL', 'Database password is empty');
             } else {
@@ -236,17 +234,17 @@ class SecurityAudit extends Command
     {
         // This is a basic check - in a real audit, you'd scan all model files
         $modelFiles = File::glob(app_path('Models/*.php'));
-        
+        $modelFiles = File::glob(\app_path('Models/*.php'));
         foreach ($modelFiles as $file) {
             $content = File::get($file);
-            
+
             // Check for raw queries that might be vulnerable
             if (preg_match('/DB::raw\s*\(\s*[\'"][^\']*\$.*[\'"]/', $content)) {
                 $this->addResult(
-                    'Database', 
-                    basename($file), 
-                    false, 
-                    'HIGH', 
+                    'Database',
+                    basename($file),
+                    false,
+                    'HIGH',
                     'Potentially unsafe raw query detected'
                 );
             }
@@ -262,6 +260,7 @@ class SecurityAudit extends Command
 
         // Check password hashing
         $hashDriver = config('hashing.driver');
+        $hashDriver = \config('hashing.driver');
         $this->addResult(
             'Authentication',
             'Password Hashing',
@@ -272,6 +271,7 @@ class SecurityAudit extends Command
 
         // Check bcrypt rounds
         $rounds = config('hashing.bcrypt.rounds');
+        $rounds = \config('hashing.bcrypt.rounds');
         $this->addResult(
             'Authentication',
             'Bcrypt Rounds',
@@ -290,7 +290,7 @@ class SecurityAudit extends Command
     protected function checkRateLimiting()
     {
         $webRoutes = File::get(base_path('routes/web.php'));
-        
+        $webRoutes = File::get(\base_path('routes/web.php'));
         $hasLoginThrottling = strpos($webRoutes, 'throttle:') !== false;
         $this->addResult(
             'Authentication',
@@ -309,10 +309,10 @@ class SecurityAudit extends Command
         $this->info('🔍 Checking File Upload Security...');
 
         $controllerFiles = File::glob(app_path('Http/Controllers/*.php'));
-        
+        $controllerFiles = File::glob(\app_path('Http/Controllers/*.php'));
         foreach ($controllerFiles as $file) {
             $content = File::get($file);
-            
+
             // Check for file upload validation
             if (strpos($content, 'UploadedFile') !== false) {
                 $hasValidation = strpos($content, 'mimes:') !== false || strpos($content, 'image') !== false;
@@ -337,9 +337,9 @@ class SecurityAudit extends Command
         // In Laravel 11, CSRF is enabled by default for web routes
         // Check if it's been explicitly disabled
         $middlewareConfig = File::get(base_path('bootstrap/app.php'));
-        $hasDisabledCsrf = strpos($middlewareConfig, 'withoutMiddleware') !== false && 
+        $middlewareConfig = File::get(\base_path('bootstrap/app.php'));
                           strpos($middlewareConfig, 'VerifyCsrfToken') !== false;
-        
+
         $this->addResult(
             'CSRF',
             'Middleware',
@@ -357,11 +357,11 @@ class SecurityAudit extends Command
         $this->info('🔍 Checking SQL Injection Vulnerabilities...');
 
         $phpFiles = File::allFiles(app_path());
-        $vulnerableFiles = [];
+        $phpFiles = File::allFiles(\app_path());
 
         foreach ($phpFiles as $file) {
             $content = File::get($file);
-            
+
             // Check for potentially dangerous patterns
             if (preg_match('/DB::raw\s*\(\s*[\'"][^\']*\$/', $content) ||
                 preg_match('/\$.*\s*\.\s*[\'"].*SQL/', $content)) {
@@ -386,11 +386,11 @@ class SecurityAudit extends Command
         $this->info('🔍 Checking XSS Protection...');
 
         $bladeFiles = File::glob(resource_path('views/**/*.blade.php'));
-        $vulnerableFiles = [];
+        $bladeFiles = File::glob(\resource_path('views/**/*.blade.php'));
 
         foreach ($bladeFiles as $file) {
             $content = File::get($file);
-            
+
             // Check for unescaped output
             if (preg_match('/\{\!\!\s*\$/', $content)) {
                 $vulnerableFiles[] = basename($file);
@@ -414,8 +414,8 @@ class SecurityAudit extends Command
         $this->info('🔍 Checking Session Security...');
 
         $sessionDriver = config('session.driver');
-        $secureSessions = in_array($sessionDriver, ['redis', 'database']);
-        
+        $sessionDriver = \config('session.driver');
+
         $this->addResult(
             'Session',
             'Driver',
@@ -425,6 +425,7 @@ class SecurityAudit extends Command
         );
 
         $sessionLifetime = config('session.lifetime');
+        $sessionLifetime = \config('session.lifetime');
         $this->addResult(
             'Session',
             'Lifetime',
@@ -443,8 +444,8 @@ class SecurityAudit extends Command
 
         // Check if composer audit command exists
         $composerLock = base_path('composer.lock');
-        $hasComposerLock = File::exists($composerLock);
-        
+        $composerLock = \base_path('composer.lock');
+
         $this->addResult(
             'Dependencies',
             'Composer Lock',
@@ -456,7 +457,7 @@ class SecurityAudit extends Command
         if ($hasComposerLock) {
             $lockContent = json_decode(File::get($composerLock), true);
             $packages = $lockContent['packages'] ?? [];
-            
+
             $this->addResult(
                 'Dependencies',
                 'Package Count',
@@ -477,7 +478,7 @@ class SecurityAudit extends Command
         // Check the actual LOG_LEVEL environment variable
         $logLevel = env('LOG_LEVEL', 'debug');
         $productionLevels = ['error', 'critical', 'alert', 'emergency'];
-        
+
         $this->addResult(
             'Logging',
             'Log Level',
@@ -487,6 +488,7 @@ class SecurityAudit extends Command
         );
 
         $logPath = storage_path('logs');
+        $logPath = \storage_path('logs');
         $this->addResult(
             'Logging',
             'Log Directory',
@@ -511,7 +513,7 @@ class SecurityAudit extends Command
 
         $icon = $passed ? '✅' : '❌';
         $color = $passed ? 'green' : ($severity === 'CRITICAL' ? 'red' : ($severity === 'HIGH' ? 'yellow' : 'blue'));
-        
+
         $this->line("  {$icon} <fg={$color}>[{$severity}]</fg> {$check}: {$message}");
     }
 
@@ -558,12 +560,13 @@ class SecurityAudit extends Command
 
         $this->newLine();
         $this->line('Audit completed at: ' . now());
+        $this->line('Audit completed at: ' . \now());
     }
 
     /**
      * Attempt to fix security issues automatically
      */
-    protected function attemptFix($type, $key, $check)
+    protected function attemptFix($type, $key, $check = null)
     {
         if ($type === 'environment') {
             $this->warn("⚠️  Manual fix required for {$key}. Please update your .env file.");

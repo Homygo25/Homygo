@@ -1,7 +1,7 @@
 @extends('partials.master2')
 
 @section('title')
-Real Estate - Homepage
+Homygo CDO - Real Estate in Cagayan de Oro City
 @endsection
 @section('css')
    
@@ -27,7 +27,7 @@ Real Estate - Homepage
           <span class="d-none d-sm-flex flex-shrink-0 text-primary rtl-flip me-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="34"><path d="M34.5 16.894v10.731c0 3.506-2.869 6.375-6.375 6.375H17.5h-.85C7.725 33.575.5 26.138.5 17c0-9.35 7.65-17 17-17s17 7.544 17 16.894z" fill="currentColor"/><g fill-rule="evenodd"><path d="M17.5 13.258c-3.101 0-5.655 2.554-5.655 5.655s2.554 5.655 5.655 5.655 5.655-2.554 5.655-5.655-2.554-5.655-5.655-5.655zm-9.433 5.655c0-5.187 4.246-9.433 9.433-9.433s9.433 4.246 9.433 9.433a9.36 9.36 0 0 1-1.569 5.192l2.397 2.397a1.89 1.89 0 0 1 0 2.671 1.89 1.89 0 0 1-2.671 0l-2.397-2.397a9.36 9.36 0 0 1-5.192 1.569c-5.187 0-9.433-4.246-9.433-9.433z" fill="#000" fill-opacity=".05"/><g fill="#fff"><path d="M17.394 10.153c-3.723 0-6.741 3.018-6.741 6.741s3.018 6.741 6.741 6.741 6.741-3.018 6.741-6.741-3.018-6.741-6.741-6.741zM7.347 16.894A10.05 10.05 0 0 1 17.394 6.847 10.05 10.05 0 0 1 27.44 16.894 10.05 10.05 0 0 1 17.394 26.94 10.05 10.05 0 0 1 7.347 16.894z"/><path d="M23.025 22.525c.645-.645 1.692-.645 2.337 0l3.188 3.188c.645.645.645 1.692 0 2.337s-1.692.645-2.337 0l-3.187-3.187c-.645-.646-.645-1.692 0-2.337z"/></g></g><path d="M23.662 14.663c2.112 0 3.825-1.713 3.825-3.825s-1.713-3.825-3.825-3.825-3.825 1.713-3.825 3.825 1.713 3.825 3.825 3.825z" fill="#fff"/><path fill-rule="evenodd" d="M23.663 8.429a2.41 2.41 0 0 0-2.408 2.408 2.41 2.41 0 0 0 2.408 2.408 2.41 2.41 0 0 0 2.408-2.408 2.41 2.41 0 0 0-2.408-2.408zm-5.242 2.408c0-2.895 2.347-5.242 5.242-5.242s5.242 2.347 5.242 5.242-2.347 5.242-5.242 5.242-5.242-2.347-5.242-5.242z" fill="currentColor"/></svg>
           </span>
-          Finder
+          Homygo CDO
         </a>
 
         <!-- Main navigation that turns into offcanvas on screens < 992px wide (lg breakpoint) -->
@@ -37,9 +37,30 @@ Real Estate - Homepage
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body pt-2 pb-4 py-lg-0 mx-lg-auto">
-            <!-- Navigation simplified - only keep logo and essential links -->
             <ul class="navbar-nav position-relative">
-              <!-- Removed Home, Listings, Account, Pages dropdowns for cleaner real estate focus -->
+              <li class="nav-item">
+                <a class="nav-link" href="{{ route('home') }}">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ route('properties.index') }}">Properties</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ route('cdo.demo') }}">
+                  <span class="badge bg-primary me-2">Demo</span>CDO Platform
+                </a>
+              </li>
+              @auth
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ route('favorites.index') }}">
+                    <i class="fi-heart me-2"></i>Favorites
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ route('notifications.index') }}">
+                    <i class="fi-bell me-2"></i>Notifications
+                  </a>
+                </li>
+              @endauth
             </ul>
           </div>
         </nav>
@@ -85,16 +106,54 @@ Real Estate - Homepage
             </ul>
           </div>
 
-          <!-- Account button -->
-          <a class="btn btn-icon btn-outline-secondary fs-lg border-0 animate-shake me-2" href="account-signin" aria-label="Sign in to account">
-            <i class="fi-user animate-target"></i>
-          </a>
+          <!-- Authentication buttons -->
+          @guest
+            <a class="btn btn-outline-secondary me-2" href="{{ route('login') }}">
+              <i class="fi-user me-2"></i>Sign In
+            </a>
+            <a class="btn btn-primary" href="{{ route('register') }}">
+              Sign Up
+            </a>
+          @else
+            <!-- User dropdown -->
+            <div class="dropdown me-2">
+              <button type="button" class="btn btn-icon btn-outline-secondary fs-lg border-0" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fi-user"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" href="{{ route('dashboard') }}">
+                    <i class="fi-home me-2"></i>Dashboard
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{{ route('favorites.index') }}">
+                    <i class="fi-heart me-2"></i>My Favorites
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{{ route('notifications.index') }}">
+                    <i class="fi-bell me-2"></i>Notifications
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="dropdown-item">
+                      <i class="fi-log-out me-2"></i>Logout
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
 
-          <!-- Add property button  -->
-          <a class="btn btn-primary animate-scale" href="add-property-type">
-            <i class="fi-plus fs-lg animate-target ms-n2 me-1 me-sm-2"></i>
-            Add<span class="d-none d-xl-inline ms-1">property</span>
-          </a>
+            <!-- Add property button  -->
+            <a class="btn btn-primary animate-scale" href="{{ route('properties.create') }}">
+              <i class="fi-plus fs-lg animate-target ms-n2 me-1 me-sm-2"></i>
+              Add<span class="d-none d-xl-inline ms-1">property</span>
+            </a>
+          @endguest
         </div>
       </div>
     </header>
@@ -108,96 +167,34 @@ Real Estate - Homepage
         <div class="container position-relative z-1 pt-5 pt-md-4 pt-xl-5">
           <div class="row pt-lg-3 pt-xl-0 pt-xxl-4 pb-4 pb-md-5 pb-xl-0">
             <div class="col-md-6 col-xxl-5 text-center text-md-start">
-              <h1 class="display-4 pb-sm-1 pb-lg-3">Easy way to find a perfect property</h1>
-              <p class="fs-lg mb-md-0">We provide a complete service for the sale, purchase or rental of real estate.</p>
+              <h1 class="display-4 pb-sm-1 pb-lg-3">Find Your Perfect Home in Cagayan de Oro City</h1>
+              <p class="fs-lg mb-md-0">Your trusted local platform for buying, selling, and renting properties in the City of Golden Friendship.</p>
+              
+              <!-- Demo Platform Links -->
+              <div class="mt-3">
+                <div class="d-flex flex-wrap gap-2">
+                  <a href="{{ route('cdo.demo') }}" class="btn btn-primary btn-sm">
+                    <i class="fi-eye me-1"></i>Platform Demo
+                  </a>
+                  <a href="{{ route('cdo.properties') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fi-search me-1"></i>Browse Properties
+                  </a>
+                  <a href="{{ route('cdo.property.show', 1) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fi-home me-1"></i>Sample Property
+                  </a>
+                </div>
+                <small class="text-muted d-block mt-2">✨ Experience our comprehensive CDO real estate platform</small>
+              </div>
             </div>
           </div>
           <div class="d-none d-md-block d-lg-none" style="height: 70px"></div>
           <div class="d-none d-lg-block d-xl-none" style="height: 130px"></div>
           <div class="d-none d-xl-block" style="height: 220px"></div>
 
-          <!-- Search form -->
+          <!-- Enhanced Search form with advanced features -->
           <div class="row pb-5 pb-md-0">
             <div class="col-xl-10 col-xxl-9">
-              <form class="bg-body border rounded-4 p-2">
-                <div class="row g-0 p-1">
-                  <div class="col-lg-7">
-                    <div class="row g-0">
-                      <div class="col-6 col-md-4 d-flex">
-                        <div class="w-100">
-                          <select class="form-select form-select-lg border-0 ps-3" data-select='{
-                            "classNames": {
-                              "containerInner": ["form-select", "form-select-lg", "border-0", "ps-3"]
-                            },
-                            "removeItemButton": false
-                          }' aria-label="Rent or sale select" required>
-                            <option value="For rent">For rent</option>
-                            <option value="For sale">For sale</option>
-                          </select>
-                        </div>
-                        <hr class="vr m-0">
-                      </div>
-                      <div class="col-6 col-md-4 d-flex">
-                        <div class="w-100">
-                          <select class="form-select form-select-lg border-0" data-select='{
-                            "classNames": {
-                              "containerInner": ["form-select", "form-select-lg", "border-0"]
-                            },
-                            "searchEnabled": true
-                          }' aria-label="Location select" required>
-                            <option value="">Location</option>
-                            <option value="New York">New York</option>
-                            <option value="Los Angeles">Los Angeles</option>
-                            <option value="Chicago">Chicago</option>
-                            <option value="Houston">Houston</option>
-                            <option value="Phoenix">Phoenix</option>
-                            <option value="Philadelphia">Philadelphia</option>
-                            <option value="San Antonio">San Antonio</option>
-                            <option value="San Diego">San Diego</option>
-                            <option value="Dallas">Dallas</option>
-                            <option value="San Jose">San Jose</option>
-                          </select>
-                        </div>
-                        <hr class="vr d-none d-md-block m-0">
-                      </div>
-                      <div class="col-md-4 d-flex">
-                        <div class="w-100">
-                          <hr class="d-md-none my-2">
-                          <select class="form-select form-select-lg border-0 ps-3" data-select='{
-                            "classNames": {
-                              "containerInner": ["form-select", "form-select-lg", "border-0", "ps-3"]
-                            },
-                            "removeItemButton": false
-                          }' aria-label="Property type select" required>
-                            <option value="">Property type</option>
-                            <option value="Houses">Houses</option>
-                            <option value="Apartments">Apartments</option>
-                            <option value="Commercial">Commercial</option>
-                            <option value="Daily rental">Daily rental</option>
-                            <option value="Offices">Offices</option>
-                            <option value="Townhouses">Townhouses</option>
-                          </select>
-                        </div>
-                        <hr class="vr d-none d-lg-block m-0">
-                      </div>
-                    </div>
-                  </div>
-                  <hr class="d-lg-none mt-2 mb-0">
-                  <div class="col-lg-5 d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3 pt-3 pt-lg-0 ps-lg-3">
-                    <div class="d-flex align-items-center w-100 gap-2 ps-2 ps-lg-0">
-                      Price
-                      <div class="range-slider w-100" data-range-slider='{"startMin": 2000, "min": 500, "max": 4000, "step": 100, "tooltipPrefix": "$"}'>
-                        <div class="range-slider-ui my-4"></div>
-                        <input type="hidden" class="form-control" data-range-slider-min>
-                      </div>
-                    </div>
-                    <button type="submit" class="btn btn-lg btn-primary">
-                      Search
-                      <i class="fi-search fs-lg ms-2 me-n1"></i>
-                    </button>
-                  </div>
-                </div>
-              </form>
+              @include('components.advanced-search')
             </div>
           </div>
           <div class="d-none d-md-block d-lg-none" style="height: 60px"></div>
@@ -517,9 +514,9 @@ Real Estate - Homepage
                   <div class="pb-1 mb-2">
                     <span class="badge text-body-emphasis bg-body-secondary">For rent</span>
                   </div>
-                  <div class="h5 mb-2">$1,620</div>
+                  <div class="h5 mb-2">₱25,000</div>
                   <h3 class="fs-sm fw-normal text-body mb-2">
-                    <a class="stretched-link text-body" href="single-entry-real-estate">40 S 9th St, Brooklyn, NY 11249</a>
+                    <a class="stretched-link text-body" href="{{ route('cdo.property.show', 1) }}">Sunshine Village, Cogon, Cagayan de Oro City</a>
                   </h3>
                   <div class="h6 fs-sm mb-0">65 sq.m</div>
                 </div>
@@ -600,9 +597,9 @@ Real Estate - Homepage
                   <div class="pb-1 mb-2">
                     <span class="badge text-body-emphasis bg-body-secondary">For rent</span>
                   </div>
-                  <div class="h5 mb-2">$1,170</div>
+                  <div class="h5 mb-2">₱18,000</div>
                   <h3 class="fs-sm fw-normal text-body mb-2">
-                    <a class="stretched-link text-body" href="single-entry-real-estate">67-04 Myrtle Ave Glendale, NY 11385</a>
+                    <a class="stretched-link text-body" href="{{ route('cdo.property.show', 2) }}">Camella Homes, Carmen, Cagayan de Oro City</a>
                   </h3>
                   <div class="h6 fs-sm mb-0">42 sq.m</div>
                 </div>
@@ -687,9 +684,9 @@ Real Estate - Homepage
                   <div class="pb-1 mb-2">
                     <span class="badge text-body-emphasis bg-body-secondary">For sale</span>
                   </div>
-                  <div class="h5 mb-2">$475,000</div>
+                  <div class="h5 mb-2">₱3,500,000</div>
                   <h3 class="fs-sm fw-normal text-body mb-2">
-                    <a class="stretched-link text-body" href="single-entry-real-estate">929 Hart St, Brooklyn, NY 11237</a>
+                    <a class="stretched-link text-body" href="{{ route('cdo.property.show', 3) }}">Golden Horizons Subdivision, Lapasan, CDO</a>
                   </h3>
                   <div class="h6 fs-sm mb-0">108 sq.m</div>
                 </div>
@@ -773,9 +770,9 @@ Real Estate - Homepage
                   <div class="pb-1 mb-2">
                     <span class="badge text-body-emphasis bg-body-secondary">For rent</span>
                   </div>
-                  <div class="h5 mb-2">$1,490</div>
+                  <div class="h5 mb-2">₱22,000</div>
                   <h3 class="fs-sm fw-normal text-body mb-2">
-                    <a class="stretched-link text-body" href="single-entry-real-estate">123 Bedford Avenue, Brooklyn, NY 11211</a>
+                    <a class="stretched-link text-body" href="{{ route('cdo.property.show', 4) }}">Xavier Estates, Balulang, Cagayan de Oro City</a>
                   </h3>
                   <div class="h6 fs-sm mb-0">80 sq.m</div>
                 </div>
@@ -856,9 +853,9 @@ Real Estate - Homepage
                   <div class="pb-1 mb-2">
                     <span class="badge text-body-emphasis bg-body-secondary">For rent</span>
                   </div>
-                  <div class="h5 mb-2">$1,320</div>
+                  <div class="h5 mb-2">₱20,000</div>
                   <h3 class="fs-sm fw-normal text-body mb-2">
-                    <a class="stretched-link text-body" href="single-entry-real-estate">517 82nd St, Brooklyn, NY 11209</a>
+                    <a class="stretched-link text-body" href="{{ route('cdo.property.show', 5) }}">Villa Soledad, Nazareth, Cagayan de Oro City</a>
                   </h3>
                   <div class="h6 fs-sm mb-0">45 sq.m</div>
                 </div>
@@ -925,9 +922,9 @@ Real Estate - Homepage
                     <div class="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
                       <div class="mb-1 mb-sm-0">
                         <h3 class="text-white d-flex flex-wrap align-items-center mb-1 mb-lg-2">3-bed apartment<span class="fs-6 fw-medium mx-2">|</span><span class="fs-6">127 sq.m</span></h3>
-                        <p class="fs-sm text-white mb-0">3811 Ditmars Blvd Astoria, NY 11105</p>
+                        <p class="fs-sm text-white mb-0">Primavera Residences, Kauswagan, CDO</p>
                       </div>
-                      <a class="btn btn-primary stretched-link" href="single-entry-real-estate">From $3,850</a>
+                      <a class="btn btn-primary stretched-link" href="{{ route('cdo.property.show', 6) }}">From ₱65,000</a>
                     </div>
                   </div>
                 </div>
@@ -950,9 +947,9 @@ Real Estate - Homepage
                     <div class="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
                       <div class="mb-1 mb-sm-0">
                         <h3 class="text-white d-flex flex-wrap align-items-center mb-1 mb-lg-2">2-bed apartment<span class="fs-6 fw-medium mx-2">|</span><span class="fs-6">78 sq.m</span></h3>
-                        <p class="fs-sm text-white mb-0">40 S 9th St, Brooklyn, NY 11249</p>
+                        <p class="fs-sm text-white mb-0">Centrio Towers, Divisoria, Cagayan de Oro</p>
                       </div>
-                      <a class="btn btn-primary stretched-link" href="single-entry-real-estate">From $2,600</a>
+                      <a class="btn btn-primary stretched-link" href="{{ route('cdo.property.show', 7) }}">From ₱45,000</a>
                     </div>
                   </div>
                 </div>
@@ -973,9 +970,9 @@ Real Estate - Homepage
                     <div class="d-flex flex-wrap align-items-center justify-content-between w-100 gap-3">
                       <div class="mb-1 mb-sm-0">
                         <h3 class="text-white d-flex flex-wrap align-items-center mb-1 mb-lg-2">1-bed apartment<span class="fs-6 fw-medium mx-2">|</span><span class="fs-6">52 sq.m</span></h3>
-                        <p class="fs-sm text-white mb-0">444 Park Ave, Brooklyn, NY 11205</p>
+                        <p class="fs-sm text-white mb-0">SM Uptown Condo, Pueblo de Oro, CDO</p>
                       </div>
-                      <a class="btn btn-primary stretched-link" href="single-entry-real-estate">From $1,750</a>
+                      <a class="btn btn-primary stretched-link" href="{{ route('cdo.property.show', 8) }}">From ₱28,000</a>
                     </div>
                   </div>
                 </div>
@@ -1011,7 +1008,7 @@ Real Estate - Homepage
       <!-- Properties by city -->
       <section class="container pt-2 pb-sm-2 pt-sm-3 py-md-4 py-lg-5 mt-xxl-3 mb-xxl-2">
         <div class="d-flex align-items-center justify-content-between gap-4 pb-3 mb-2 mb-sm-3 mb-lg-4">
-          <h2 class="h1 mb-0">Search by city</h2>
+          <h2 class="h1 mb-0">Browse CDO Barangays</h2>
 
           <!-- Prev/next buttons -->
           <div class="d-flex gap-2">
@@ -1066,18 +1063,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">New York</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'divisoria']) }}">Divisoria</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">1739</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">156</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">3845</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">203</span></div>
                   </div>
                 </div>
               </article>
@@ -1093,18 +1090,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">Dallas</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'nazareth']) }}">Nazareth</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">986</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">76</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">2903</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">112</span></div>
                   </div>
                 </div>
               </article>
@@ -1120,18 +1117,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">San Francisco</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'lapasan']) }}">Lapasan</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">2134</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">134</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">4561</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">89</span></div>
                   </div>
                 </div>
               </article>
@@ -1147,18 +1144,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">Los Angeles</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'cogon']) }}">Cogon</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">1875</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">125</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">3262</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">87</span></div>
                   </div>
                 </div>
               </article>
@@ -1174,18 +1171,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">Chicago</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'carmen']) }}">Carmen</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">1549</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">98</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">2806</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">145</span></div>
                   </div>
                 </div>
               </article>
@@ -1201,18 +1198,18 @@ Real Estate - Homepage
                 </div>
                 <div class="card-body text-center p-3">
                   <h3 class="h5 mb-0">
-                    <a class="hover-effect-underline stretched-link" href="listings-real-estate">Philadelphia</a>
+                    <a class="hover-effect-underline stretched-link" href="{{ route('cdo.properties', ['location' => 'gusa']) }}">Gusa</a>
                   </h3>
                 </div>
                 <div class="card-footer d-flex bg-transparent border-0 pt-0 pb-3 px-3 mt-n1">
                   <div class="w-50 text-center pe-1">
                     <i class="fi-zap mb-1"></i>
-                    <div class="fs-sm">for sale <span class="fw-semibold">874</span></div>
+                    <div class="fs-sm">for sale <span class="fw-semibold">67</span></div>
                   </div>
                   <hr class="vr my-0 mx-2">
                   <div class="w-50 text-center ps-1">
                     <i class="fi-tag mb-1"></i>
-                    <div class="fs-sm">for rent <span class="fw-semibold">1625</span></div>
+                    <div class="fs-sm">for rent <span class="fw-semibold">94</span></div>
                   </div>
                 </div>
               </article>

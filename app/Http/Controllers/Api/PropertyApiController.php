@@ -7,16 +7,48 @@ use App\Models\Property;
 use App\Models\Category;
 use App\Models\Location;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 class PropertyApiController extends Controller
 {
     /**
+     * Return location name suggestions for autocomplete
+     */
+    public function locationSuggestions(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'query' => 'required|string|min:1|max:100',
+            'limit' => 'nullable|integer|min:1|max:20'
+        ]);
+
+        if ($validator->fails()) {
+            return Response::json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $query = $request->input('query');
+        $limit = $request->input('limit', 8);
+
+        $locations = Location::where('is_active', true)
+            ->where('name', 'LIKE', "%{$query}%")
+            ->orderBy('name')
+            ->limit($limit)
+            ->get(['id', 'name']);
+
+        return Response::json([
+            'success' => true,
+            'data' => $locations
+        ]);
+    }
+
+    /**
      * Get properties with advanced filtering and pagination
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'search' => 'nullable|string|max:255',
@@ -33,9 +65,8 @@ class PropertyApiController extends Controller
             'featured_only' => 'nullable|boolean',
             'with_images' => 'nullable|boolean'
         ]);
-
         if ($validator->fails()) {
-            return response()->json([
+            return Response::json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
@@ -43,34 +74,30 @@ class PropertyApiController extends Controller
         }
 
         $query = Property::with(['category:id,name', 'location:id,name', 'user:id,name'])
-                        ->where('status', 'active');
+            ->where('status', 'active');
 
         // Apply filters
         $this->applyFilters($query, $request);
 
-        // Apply search
         if ($request->filled('search')) {
-            $this->applySearch($query, $request->search);
+            $this->applySearch($query, $request->input('search'));
         }
 
-        // Featured only filter
-        if ($request->get('featured_only')) {
+        if ($request->boolean('featured_only')) {
             $query->where('is_featured', true);
         }
 
         // Apply sorting
         $this->applySorting($query, $request);
 
-        // Pagination
-        $perPage = $request->get('per_page', 12);
+        $perPage = $request->input('per_page', 12);
         $properties = $query->paginate($perPage);
 
         // Transform the data
         $transformedProperties = $properties->map(function ($property) use ($request) {
-            return $this->transformProperty($property, $request->get('with_images', false));
+            return $this->transformProperty($property, $request->boolean('with_images', false));
         });
-
-        return response()->json([
+        return Response::json([
             'success' => true,
             'data' => [
                 'properties' => $transformedProperties,
@@ -91,10 +118,10 @@ class PropertyApiController extends Controller
     /**
      * Get single property details
      */
-    public function show(Property $property): JsonResponse
+    public function show(Property $property)
     {
         if ($property->status !== 'active') {
-            return response()->json([
+            return Response::json([
                 'success' => false,
                 'message' => 'Property not found or not available'
             ], 404);
@@ -105,8 +132,8 @@ class PropertyApiController extends Controller
 
         // Load relationships
         $property->load([
-            'category:id,name', 
-            'location:id,name', 
+            'category:id,name',
+            'location:id,name',
             'user:id,name,email,phone'
         ]);
 
@@ -117,7 +144,7 @@ class PropertyApiController extends Controller
             ->limit(4)
             ->get(['id', 'title', 'price', 'address', 'images', 'bedrooms', 'bathrooms']);
 
-        return response()->json([
+        return Response::json([
             'success' => true,
             'data' => [
                 'property' => $this->transformProperty($property, true),
@@ -131,7 +158,7 @@ class PropertyApiController extends Controller
     /**
      * Get property statistics and analytics
      */
-    public function statistics(): JsonResponse
+    public function statistics()
     {
         $stats = Cache::remember('property_statistics', 3600, function () {
             return [
@@ -162,8 +189,7 @@ class PropertyApiController extends Controller
                     ->pluck('count', 'name')
             ];
         });
-
-        return response()->json([
+        return Response::json([
             'success' => true,
             'data' => $stats
         ]);
@@ -172,7 +198,7 @@ class PropertyApiController extends Controller
     /**
      * Get filter options for property search
      */
-    public function filters(): JsonResponse
+    public function filters()
     {
         $filters = Cache::remember('property_filters', 3600, function () {
             return [
@@ -213,8 +239,7 @@ class PropertyApiController extends Controller
                 ]
             ];
         });
-
-        return response()->json([
+        return Response::json([
             'success' => true,
             'data' => $filters
         ]);
@@ -223,7 +248,7 @@ class PropertyApiController extends Controller
     /**
      * Search properties with autocomplete suggestions
      */
-    public function autocomplete(Request $request): JsonResponse
+    public function autocomplete(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'query' => 'required|string|min:2|max:100',
@@ -231,14 +256,14 @@ class PropertyApiController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
+            return Response::json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $query = $request->query;
-        $limit = $request->get('limit', 10);
+        $query = $request->input('query');
+        $limit = $request->input('limit', 10);
 
         $suggestions = Cache::remember("autocomplete_{$query}_{$limit}", 300, function () use ($query, $limit) {
             $properties = Property::where('status', 'active')
@@ -274,42 +299,42 @@ class PropertyApiController extends Controller
             ];
         });
 
-        return response()->json([
+        return Response::json([
             'success' => true,
             'data' => $suggestions
         ]);
     }
 
     // Private helper methods
-    
+
     private function applyFilters($query, Request $request)
     {
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $query->where('category_id', $request->input('category_id'));
         }
 
         if ($request->filled('location_id')) {
-            $query->where('location_id', $request->location_id);
+            $query->where('location_id', $request->input('location_id'));
         }
 
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
+            $query->where('price', '>=', $request->input('min_price'));
         }
 
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
+            $query->where('price', '<=', $request->input('max_price'));
         }
 
         if ($request->filled('bedrooms')) {
-            $query->where('bedrooms', '>=', $request->bedrooms);
+            $query->where('bedrooms', '>=', $request->input('bedrooms'));
         }
 
         if ($request->filled('bathrooms')) {
-            $query->where('bathrooms', '>=', $request->bathrooms);
+            $query->where('bathrooms', '>=', $request->input('bathrooms'));
         }
 
         if ($request->filled('property_type')) {
-            $query->where('property_type', $request->property_type);
+            $query->where('property_type', $request->input('property_type'));
         }
     }
 
@@ -330,7 +355,7 @@ class PropertyApiController extends Controller
 
     private function applySorting($query, Request $request)
     {
-        $sortBy = $request->get('sort_by', 'newest');
+        $sortBy = $request->input('sort_by', 'newest');
 
         switch ($sortBy) {
             case 'price_asc':
@@ -389,8 +414,7 @@ class PropertyApiController extends Controller
             $data['images'] = array_map(function ($image) {
                 return [
                     'path' => $image['path'],
-                    'thumbnail_path' => $image['thumbnail_path'] ?? null,
-                    'url' => asset('storage/' . $image['path']),
+                    'url' => url('storage/' . $image['path']),
                     'thumbnail_url' => isset($image['thumbnail_path']) ? asset('storage/' . $image['thumbnail_path']) : null
                 ];
             }, $images);
@@ -406,13 +430,15 @@ class PropertyApiController extends Controller
     private function getAppliedFilters(Request $request)
     {
         $filters = [];
-        
-        foreach (['search', 'category_id', 'location_id', 'min_price', 'max_price', 'bedrooms', 'bathrooms', 'property_type', 'sort_by'] as $filter) {
+        $filterKeys = [
+            'search', 'category_id', 'location_id', 'min_price', 'max_price',
+            'bedrooms', 'bathrooms', 'property_type', 'sort_by', 'featured_only', 'with_images'
+        ];
+        foreach ($filterKeys as $filter) {
             if ($request->filled($filter)) {
-                $filters[$filter] = $request->get($filter);
+                $filters[$filter] = $request->input($filter);
             }
         }
-        
         return $filters;
     }
 }

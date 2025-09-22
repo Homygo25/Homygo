@@ -33,14 +33,15 @@ Account - Sign In
           </div>
 
           <!-- Form -->
-          <form class="needs-validation" novalidate>
+          <form class="needs-validation" method="POST" action="{{ route('login') }}" novalidate>
+            @csrf
             <div class="position-relative mb-4">
-              <input type="email" class="form-control form-control-lg" placeholder="Email" required>
+              <input type="email" class="form-control form-control-lg" name="email" placeholder="Email" value="{{ old('email') }}" required autocomplete="username">
               <div class="invalid-tooltip bg-transparent py-0">Enter a valid email address!</div>
             </div>
             <div class="mb-4">
               <div class="password-toggle">
-                <input type="password" class="form-control form-control-lg" placeholder="Password" required>
+                <input type="password" class="form-control form-control-lg" name="password" placeholder="Password" required autocomplete="current-password">
                 <div class="invalid-tooltip bg-transparent py-0">Password is incorrect!</div>
                 <label class="password-toggle-button fs-lg" aria-label="Show/hide password">
                   <input type="checkbox" class="btn-check">
@@ -49,11 +50,11 @@ Account - Sign In
             </div>
             <div class="d-flex align-items-center justify-content-between mb-4">
               <div class="form-check me-2">
-                <input type="checkbox" class="form-check-input" id="remember-30">
+                <input type="checkbox" class="form-check-input" id="remember-30" name="remember">
                 <label for="remember-30" class="form-check-label">Remember for 30 days</label>
               </div>
               <div class="nav">
-                <a class="nav-link animate-underline p-0" href="account-password-recovery.html">
+                <a class="nav-link animate-underline p-0" href="{{ route('password.request') }}">
                   <span class="animate-target">Forgot password?</span>
                 </a>
               </div>

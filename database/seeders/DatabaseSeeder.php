@@ -15,14 +15,9 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::firstOrCreate(
-            ['email' => 'admin@finder.com'],
-            ['name' => 'Admin User']
-        );
-
+        // CDO-specific seeder for local data
         $this->call([
-            CategorySeeder::class,
-            LocationSeeder::class,
+            CagayanDeOroSeeder::class,
         ]);
     }
 }

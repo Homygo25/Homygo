@@ -12,10 +12,10 @@ Account - Sign In
         <!-- Page content -->
         <main class="content-wrapper w-100 px-3 ps-lg-5 pe-lg-4 mx-auto" style="max-width: 1920px">
           <div class="d-lg-flex">
-    
+
             <!-- Login form + Footer -->
             <div class="d-flex flex-column min-vh-100 w-100 py-4 mx-auto me-lg-5" style="max-width: 416px">
-    
+
               <!-- Logo -->
               <header class="navbar px-0 pb-4 mt-n2 mt-sm-0 mb-2 mb-md-3 mb-lg-4">
                 <a class="navbar-brand pt-0" href="index.html">
@@ -25,7 +25,7 @@ Account - Sign In
                   Finder
                 </a>
               </header>
-    
+
               <h1 class="h2 mt-auto">Create an account</h1>
               <div class="nav fs-sm mb-3 mb-lg-4">
                 I already have an account
@@ -35,31 +35,38 @@ Account - Sign In
                 <span class="me-2">Uncertain about creating an account?</span>
                 <a class="nav-link text-decoration-underline p-0" href="#benefits" data-bs-toggle="offcanvas" aria-controls="benefits">Explore the Benefits</a>
               </div>
-    
+
               <!-- Form -->
-              <form class="needs-validation" novalidate>
+              <form class="needs-validation" method="POST" action="{{ route('register') }}" novalidate>
+                @csrf
+                <div class="position-relative mb-4">
+                  <label for="register-name" class="form-label">Name</label>
+                  <input type="text" class="form-control form-control-lg" id="register-name" name="name" value="{{ old('name') }}" required autofocus autocomplete="name">
+                  <div class="invalid-tooltip bg-transparent py-0">Enter your name!</div>
+                </div>
                 <div class="position-relative mb-4">
                   <label for="register-email" class="form-label">Email</label>
-                  <input type="email" class="form-control form-control-lg" id="register-email" required>
+                  <input type="email" class="form-control form-control-lg" id="register-email" name="email" value="{{ old('email') }}" required autocomplete="username">
                   <div class="invalid-tooltip bg-transparent py-0">Enter a valid email address!</div>
                 </div>
                 <div class="mb-4">
                   <label for="register-password" class="form-label">Password</label>
                   <div class="password-toggle">
-                    <input type="password" class="form-control form-control-lg" id="register-password" minlength="8" placeholder="Minimum 8 characters" required>
+                    <input type="password" class="form-control form-control-lg" id="register-password" name="password" minlength="8" placeholder="Minimum 8 characters" required autocomplete="new-password">
                     <div class="invalid-tooltip bg-transparent py-0">Password does not meet the required criteria!</div>
                     <label class="password-toggle-button fs-lg" aria-label="Show/hide password">
                       <input type="checkbox" class="btn-check">
                     </label>
                   </div>
                 </div>
+                <div class="mb-4">
+                  <label for="register-password-confirmation" class="form-label">Confirm Password</label>
+                  <input type="password" class="form-control form-control-lg" id="register-password-confirmation" name="password_confirmation" required autocomplete="new-password">
+                  <div class="invalid-tooltip bg-transparent py-0">Passwords must match!</div>
+                </div>
                 <div class="d-flex flex-column gap-2 mb-4">
                   <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="save-pass">
-                    <label for="save-pass" class="form-check-label">Save the password</label>
-                  </div>
-                  <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="privacy" required>
+                    <input type="checkbox" class="form-check-input" id="privacy" name="terms" required>
                     <label for="privacy" class="form-check-label">I have read and accept the <a class="text-dark-emphasis" href="#!">Privacy Policy</a></label>
                   </div>
                 </div>
@@ -68,14 +75,14 @@ Account - Sign In
                   <i class="fi-chevron-right fs-lg ms-1 me-n1"></i>
                 </button>
               </form>
-    
+
               <!-- Divider -->
               <div class="d-flex align-items-center my-4">
                 <hr class="w-100 m-0">
                 <span class="text-body-emphasis fw-medium text-nowrap mx-4">or continue with</span>
                 <hr class="w-100 m-0">
               </div>
-    
+
               <!-- Social login -->
               <div class="d-flex flex-column flex-sm-row gap-3 pb-4 mb-3 mb-lg-4">
                 <button type="button" class="btn btn-lg btn-outline-secondary w-100 px-2">
@@ -91,7 +98,7 @@ Account - Sign In
                   Apple
                 </button>
               </div>
-    
+
               <!-- Footer -->
               <footer class="mt-auto">
                 <div class="nav mb-4">
@@ -102,8 +109,8 @@ Account - Sign In
                 </p>
               </footer>
             </div>
-    
-    
+
+
             <!-- Benefits section that turns into offcanvas on screens < 992px wide (lg breakpoint) -->
             <div class="offcanvas-lg offcanvas-end w-100 py-lg-4 ms-auto" id="benefits" style="max-width: 1034px">
               <div class="offcanvas-header justify-content-end position-relative z-2 p-3">

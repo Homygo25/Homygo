@@ -207,4 +207,91 @@ class Property extends Model
     {
         return in_array($this->status, ['sold', 'rented']);
     }
+
+    // New relationships for Phase 6
+    public function views()
+    {
+        return $this->hasMany(PropertyView::class);
+    }
+
+    public function inquiries()
+    {
+        return $this->hasMany(PropertyInquiry::class);
+    }
+
+    public function uniqueViews()
+    {
+        return $this->hasMany(PropertyView::class)
+                   ->selectRaw('DISTINCT ip_address, user_id, property_id')
+                   ->distinct();
+    }
+
+    public function recentViews($days = 30)
+    {
+        return $this->views()
+                   ->where('viewed_at', '>=', now()->subDays($days));
+    }
+
+    public function pendingInquiries()
+    {
+        return $this->inquiries()->pending();
+    }
+
+    // Analytics methods
+    public function getTotalViewsAttribute()
+    {
+        return $this->views()->count();
+    }
+
+    public function getUniqueViewsCountAttribute()
+    {
+        return $this->views()
+                   ->distinct(['ip_address', 'user_id'])
+                   ->count();
+    }
+
+    public function getInquiriesCountAttribute()
+    {
+        return $this->inquiries()->count();
+    }
+
+    public function getViewsThisMonthAttribute()
+    {
+        return $this->views()
+                   ->where('viewed_at', '>=', now()->startOfMonth())
+                   ->count();
+    }
+
+    public function getInquiriesThisMonthAttribute()
+    {
+        return $this->inquiries()
+                   ->where('created_at', '>=', now()->startOfMonth())
+                   ->count();
+    }
+
+    public function recordView($request = null)
+    {
+        $this->views()->create([
+            'user_id' => Auth::id(),
+            'ip_address' => $request ? $request->ip() : request()->ip(),
+            'user_agent' => $request ? $request->userAgent() : request()->userAgent(),
+            'referrer' => $request ? $request->header('referer') : request()->header('referer'),
+            'session_id' => session()->getId(),
+            'viewed_at' => now(),
+            'device_type' => $this->detectDeviceType($request ? $request->userAgent() : request()->userAgent()),
+        ]);
+
+        // Increment the views counter
+        $this->increment('views');
+    }
+
+    private function detectDeviceType($userAgent)
+    {
+        if (preg_match('/Mobile|Android|iPhone|iPad/', $userAgent)) {
+            return 'mobile';
+        } elseif (preg_match('/Tablet/', $userAgent)) {
+            return 'tablet';
+        }
+        return 'desktop';
+    }
 }

@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\URL;
 
 class SocialSharingController extends Controller
 {
@@ -17,14 +16,13 @@ class SocialSharingController extends Controller
     public function getShareLinks(Property $property): JsonResponse
     {
         $propertyUrl = route('properties.show', $property);
+        $propertyUrl = route('properties.show', $property);
         $title = urlencode($property->title);
-        $description = urlencode(substr($property->description, 0, 200) . '...');
         $price = urlencode('$' . number_format($property->price));
-        
+
         // Get first image for sharing
         $images = json_decode($property->images ?? '[]', true);
         $imageUrl = !empty($images) ? asset('storage/' . $images[0]['path']) : asset('images/default-property.jpg');
-        
         $shareData = [
             'property' => [
                 'id' => $property->id,
@@ -55,13 +53,13 @@ class SocialSharingController extends Controller
                 'twitter:image' => $imageUrl
             ]
         ];
-        
+
         return response()->json([
             'success' => true,
             'data' => $shareData
         ]);
     }
-    
+
     /**
      * Share property via email
      */
@@ -74,14 +72,14 @@ class SocialSharingController extends Controller
             'sender_email' => 'required|email',
             'message' => 'nullable|string|max:1000'
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
-        
+
         try {
             $data = [
                 'property' => $property,
@@ -92,18 +90,18 @@ class SocialSharingController extends Controller
                 'property_url' => route('properties.show', $property),
                 'property_images' => $this->getPropertyImages($property, 3)
             ];
-            
+
             Mail::send('emails.property-share', $data, function ($message) use ($request, $property) {
                 $message->to($request->recipient_email, $request->recipient_name)
                         ->subject('Check out this property: ' . $property->title)
                         ->replyTo($request->sender_email, $request->sender_name);
             });
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Property shared successfully via email'
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -111,7 +109,7 @@ class SocialSharingController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Generate and track short URL for property sharing
      */
@@ -119,10 +117,10 @@ class SocialSharingController extends Controller
     {
         // In a real application, you would use a URL shortening service like bit.ly
         // For now, we'll create a simple tracking system
-        
+
         $shortCode = $this->generateShortCode();
         $originalUrl = route('properties.show', $property);
-        
+
         // Store in cache for tracking (in production, use database)
         cache()->put("short_url_{$shortCode}", [
             'property_id' => $property->id,
@@ -130,9 +128,9 @@ class SocialSharingController extends Controller
             'created_at' => now(),
             'clicks' => 0
         ], now()->addDays(30));
-        
+
         $shortUrl = route('shared.redirect', $shortCode);
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -143,28 +141,28 @@ class SocialSharingController extends Controller
             ]
         ]);
     }
-    
+
     /**
      * Redirect from short URL and track clicks
      */
     public function redirectShortUrl($shortCode)
     {
         $urlData = cache()->get("short_url_{$shortCode}");
-        
+
         if (!$urlData) {
             abort(404, 'Short URL not found or expired');
         }
-        
+
         // Increment click count
         $urlData['clicks']++;
         cache()->put("short_url_{$shortCode}", $urlData, now()->addDays(30));
-        
+
         // Track the click (in production, you'd store this in database)
         $this->trackClick($shortCode, $urlData['property_id']);
-        
+
         return redirect($urlData['original_url']);
     }
-    
+
     /**
      * Get sharing statistics for a property
      */
@@ -189,13 +187,13 @@ class SocialSharingController extends Controller
                 ['platform' => 'email', 'shared_at' => now()->subDays(1)]
             ]
         ];
-        
+
         return response()->json([
             'success' => true,
             'data' => $stats
         ]);
     }
-    
+
     /**
      * Share property on social media (track share action)
      */
@@ -204,16 +202,16 @@ class SocialSharingController extends Controller
         $validator = Validator::make($request->all(), [
             'platform' => 'required|string|in:facebook,twitter,linkedin,whatsapp,telegram,email,copy_link'
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
-        
+
         $platform = $request->platform;
-        
+
         // Track the share action (in production, store in database)
         $shareData = [
             'property_id' => $property->id,
@@ -223,13 +221,13 @@ class SocialSharingController extends Controller
             'user_agent' => $request->userAgent(),
             'shared_at' => now()
         ];
-        
+
         // For demo, we'll just cache it
         $cacheKey = "property_shares_{$property->id}";
         $shares = cache()->get($cacheKey, []);
         $shares[] = $shareData;
         cache()->put($cacheKey, $shares, now()->addDays(30));
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Share tracked successfully',
@@ -239,7 +237,7 @@ class SocialSharingController extends Controller
             ]
         ]);
     }
-    
+
     /**
      * Get popular properties based on shares
      */
@@ -250,7 +248,7 @@ class SocialSharingController extends Controller
             ->orderBy('views', 'desc')
             ->limit(10)
             ->get(['id', 'title', 'price', 'address', 'images', 'views']);
-        
+
         $transformed = $popularProperties->map(function ($property) {
             return [
                 'id' => $property->id,
@@ -264,7 +262,7 @@ class SocialSharingController extends Controller
                 'image' => $this->getPropertyImages($property, 1)[0] ?? null
             ];
         });
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -273,12 +271,12 @@ class SocialSharingController extends Controller
             ]
         ]);
     }
-    
+
     private function generateShortCode()
     {
         return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
     }
-    
+
     private function trackClick($shortCode, $propertyId)
     {
         // In production, you would store click analytics in database
@@ -289,27 +287,27 @@ class SocialSharingController extends Controller
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent()
         ];
-        
+
         // For demo, store in cache
         $cacheKey = "short_url_clicks_{$shortCode}";
         $clicks = cache()->get($cacheKey, []);
         $clicks[] = $clickData;
         cache()->put($cacheKey, $clicks, now()->addDays(30));
     }
-    
+
     private function getPropertyImages($property, $limit = 3)
     {
         if (!$property->images) {
             return [];
         }
-        
+
         $images = json_decode($property->images, true) ?? [];
-        
+
         return array_map(function ($image) {
             return [
                 'url' => asset('storage/' . $image['path']),
-                'thumbnail_url' => isset($image['thumbnail_path']) 
-                    ? asset('storage/' . $image['thumbnail_path']) 
+                'thumbnail_url' => isset($image['thumbnail_path'])
+                    ? asset('storage/' . $image['thumbnail_path'])
                     : asset('storage/' . $image['path'])
             ];
         }, array_slice($images, 0, $limit));

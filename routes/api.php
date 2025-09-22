@@ -31,6 +31,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/properties/statistics', 'statistics')->name('api.properties.statistics');
         Route::get('/properties/autocomplete', 'autocomplete')->name('api.properties.autocomplete');
         Route::get('/properties/{property}', 'show')->name('api.properties.show');
+    // Location suggestions for search bar autocomplete
+    Route::get('/location-suggestions', 'locationSuggestions')->name('api.location.suggestions');
     });
 });
 
@@ -42,7 +44,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::post('/properties/bulk-action', 'bulkAction')->name('api.properties.bulk-action');
         Route::get('/properties/{property}/analytics', 'analytics')->name('api.properties.analytics');
     });
-    
+
     // Image management
     Route::controller(ImageUploadController::class)->group(function () {
         Route::post('/upload/property-images', 'uploadPropertyImages')->name('api.upload.property-images');
@@ -60,7 +62,7 @@ Route::middleware('auth:sanctum')->post('/properties/{property}/favorite', funct
         ->where('favoritable_id', $property->id)
         ->where('favoritable_type', \App\Models\Property::class)
         ->first();
-        
+
     if ($favorite) {
         $favorite->delete();
         return response()->json(['success' => true, 'favorited' => false]);
@@ -84,14 +86,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/properties/nearby', 'nearby');
         Route::get('/properties/{property}', 'show');
     });
-    
+
     // Categories API
     Route::get('/categories', function () {
         return \App\Models\Category::with('children')
             ->whereNull('parent_id')
             ->get();
     });
-    
+
     // Locations API
     Route::get('/locations', function () {
         return \App\Models\Location::with('children')
@@ -108,14 +110,14 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
         Route::put('/properties/{property}', 'update');
         Route::delete('/properties/{property}', 'destroy');
     });
-    
+
     // User favorites
     Route::post('/properties/{property}/favorite', function (\App\Models\Property $property, Request $request) {
         $user = $request->user();
         $favorite = $user->favorites()->where('favoritable_id', $property->id)
             ->where('favoritable_type', \App\Models\Property::class)
             ->first();
-            
+
         if ($favorite) {
             $favorite->delete();
             return response()->json(['favorited' => false]);
@@ -127,21 +129,21 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
             return response()->json(['favorited' => true]);
         }
     });
-    
+
     // User reviews
     Route::post('/properties/{property}/review', function (\App\Models\Property $property, Request $request) {
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'required|string|max:1000'
         ]);
-        
+
         $review = $request->user()->reviews()->create([
             'reviewable_id' => $property->id,
             'reviewable_type' => \App\Models\Property::class,
             'rating' => $request->rating,
             'comment' => $request->comment
         ]);
-        
+
         return response()->json($review->load('user'), 201);
     });
 });
@@ -161,7 +163,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('v1')->group(functi
         Route::put('/notifications/preferences', 'updatePreferences');
         Route::get('/notifications/statistics', 'getStatistics');
         Route::post('/notifications/test', 'sendTestNotification');
-        
+
         // Property alerts API
         Route::post('/property-alerts', 'createPropertyAlert');
         Route::get('/property-alerts', 'getAlerts');

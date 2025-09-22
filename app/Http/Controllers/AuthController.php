@@ -10,12 +10,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use function view;
+use function redirect;
+use function route;
+use function back;
+use function __;
+use function event;
 
 class AuthController extends Controller
 {
@@ -42,7 +52,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            
+
             return redirect()->intended(route('dashboard'))
                 ->with('success', 'Welcome back!');
         }
@@ -66,7 +76,7 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         // Validate with both name formats - either combined name or first/last separately
-        if ($request->has('name')) {
+        if ($request->filled('name')) {
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
@@ -75,12 +85,12 @@ class AuthController extends Controller
                 'role' => 'nullable|in:buyer,seller,agent,contractor',
                 'terms' => 'sometimes|accepted',
             ]);
-            
+
             // Parse name into first and last
-            $nameParts = explode(' ', $request->name, 2);
+            $nameParts = explode(' ', $request->input('name'), 2);
             $firstName = $nameParts[0];
             $lastName = $nameParts[1] ?? '';
-            $userName = $request->name;
+            $userName = $request->input('name');
         } else {
             $request->validate([
                 'first_name' => 'required|string|max:255',
@@ -91,25 +101,25 @@ class AuthController extends Controller
                 'role' => 'required|in:buyer,seller,agent,contractor',
                 'terms' => 'required|accepted',
             ]);
-            
-            $firstName = $request->first_name;
-            $lastName = $request->last_name;
+
+            $firstName = $request->input('first_name');
+            $lastName = $request->input('last_name');
             $userName = $firstName . ' ' . $lastName;
         }
 
         // Create user
         $user = User::create([
             'name' => $userName,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
         ]);
 
         // Create user profile
         $user->userProfile()->create([
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'phone' => $request->phone,
-            'role' => $request->role ?? 'buyer',
+            'phone' => $request->input('phone'),
+            'role' => $request->input('role') ?? 'buyer',
         ]);
 
         event(new Registered($user));
@@ -217,16 +227,16 @@ class AuthController extends Controller
 
         // Update user
         $emailChanged = $user->email !== $request->email;
-        
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
         ];
-        
+
         if ($emailChanged) {
             $data['email_verified_at'] = null;
         }
-        
+
         $user->update($data);
 
         // Handle avatar upload
@@ -237,31 +247,31 @@ class AuthController extends Controller
         }
 
         // Parse name into first and last name for profile
-        $nameParts = explode(' ', $request->name, 2);
-        $firstName = $nameParts[0];
-        $lastName = $nameParts[1] ?? '';
+    $nameParts = explode(' ', $request->input('name'), 2);
+    $firstName = $nameParts[0];
+    $lastName = $nameParts[1] ?? '';
 
         // Update or create profile
         if ($userProfile) {
             $userProfile->update([
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'phone' => $request->phone,
-                'bio' => $request->bio,
-                'company_name' => $request->company_name,
-                'website' => $request->website,
-                'address' => $request->address,
+                'phone' => $request->input('phone'),
+                'bio' => $request->input('bio'),
+                'company_name' => $request->input('company_name'),
+                'website' => $request->input('website'),
+                'address' => $request->input('address'),
                 'avatar' => $avatarPath,
             ]);
         } else {
             $user->userProfile()->create([
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'phone' => $request->phone,
-                'bio' => $request->bio,
-                'company_name' => $request->company_name,
-                'website' => $request->website,
-                'address' => $request->address,
+                'phone' => $request->input('phone'),
+                'bio' => $request->input('bio'),
+                'company_name' => $request->input('company_name'),
+                'website' => $request->input('website'),
+                'address' => $request->input('address'),
                 'avatar' => $avatarPath,
             ]);
         }
@@ -277,7 +287,7 @@ class AuthController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        
+
         $properties = $user->properties()
             ->with(['category', 'primaryImage'])
             ->latest()
@@ -293,7 +303,7 @@ class AuthController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        
+
         $favorites = $user->favorites()
             ->with(['favoritable'])
             ->latest()
@@ -308,7 +318,7 @@ class AuthController extends Controller
     public function settings()
     {
         $user = Auth::user();
-        
+
         return view('account-settings', compact('user'));
     }
 

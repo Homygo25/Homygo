@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
 
@@ -94,10 +95,10 @@ class ImageUploadController extends Controller
 
         try {
             $uploadResult = $this->processAndStoreImage(
-                $request->file('image'), 
-                $propertyId, 
-                0, 
-                $resize, 
+                $request->file('image'),
+                $propertyId,
+                0,
+                $resize,
                 $watermark,
                 $type
             );
@@ -135,7 +136,7 @@ class ImageUploadController extends Controller
 
         try {
             $imagePath = $request->image_path;
-            
+
             // Security check - ensure the path is within allowed directories
             if (!str_starts_with($imagePath, 'properties/') && !str_starts_with($imagePath, 'temp/')) {
                 return response()->json([
@@ -224,7 +225,7 @@ class ImageUploadController extends Controller
     public function getUploadProgress(Request $request): JsonResponse
     {
         $sessionId = $request->get('session_id');
-        
+
         if (!$sessionId) {
             return response()->json([
                 'success' => false,
@@ -249,7 +250,7 @@ class ImageUploadController extends Controller
         $originalName = $image->getClientOriginalName();
         $extension = $image->getClientOriginalExtension();
         $filename = $propertyId . '_' . time() . '_' . $index . '.' . $extension;
-        
+
         // Different storage paths based on type
         $storagePath = match($type) {
             'profile' => "profiles/{$propertyId}",
@@ -278,7 +279,7 @@ class ImageUploadController extends Controller
         if ($resize || $watermark) {
             try {
                 $processedImage = Image::read(storage_path('app/public/' . $fullPath));
-                
+
                 // Get original dimensions
                 $imageInfo['width'] = $processedImage->width();
                 $imageInfo['height'] = $processedImage->height();
@@ -298,19 +299,19 @@ class ImageUploadController extends Controller
                 // Create thumbnail
                 $thumbnail = clone $processedImage;
                 $thumbnail->scale(width: 300, height: 300);
-                
+
                 // Ensure thumbnail directory exists
                 $thumbnailDir = dirname(storage_path('app/public/' . $thumbnailPath));
                 if (!file_exists($thumbnailDir)) {
                     mkdir($thumbnailDir, 0755, true);
                 }
-                
+
                 $thumbnail->save(storage_path('app/public/' . $thumbnailPath), quality: 80);
                 $imageInfo['thumbnail_path'] = $thumbnailPath;
 
             } catch (\Exception $e) {
                 // If image processing fails, continue with original
-                \Log::warning("Image processing failed: " . $e->getMessage());
+                Log::warning("Image processing failed: " . $e->getMessage());
             }
         }
 
@@ -326,7 +327,7 @@ class ImageUploadController extends Controller
         // For now, we'll just add a simple text watermark
         try {
             $watermarkText = config('app.name', 'Property Portal');
-            
+
             // Add text watermark in bottom right corner
             $image->text($watermarkText, $image->width() - 10, $image->height() - 10, function ($font) {
                 $font->file(public_path('fonts/arial.ttf')); // Make sure font exists
@@ -337,7 +338,7 @@ class ImageUploadController extends Controller
                 $font->angle(0);
             });
         } catch (\Exception $e) {
-            \Log::warning("Watermark failed: " . $e->getMessage());
+            Log::warning("Watermark failed: " . $e->getMessage());
         }
     }
 
@@ -352,12 +353,12 @@ class ImageUploadController extends Controller
 
             foreach ($tempDirectories as $dir) {
                 $dirName = basename($dir);
-                
+
                 // Check if directory name starts with 'temp_' and extract timestamp
                 if (str_starts_with($dirName, 'temp_')) {
                     $timestamp = (int) str_replace('temp_', '', $dirName);
                     $ageInHours = (time() - $timestamp) / 3600;
-                    
+
                     // Delete directories older than 24 hours
                     if ($ageInHours > 24) {
                         Storage::disk('public')->deleteDirectory($dir);

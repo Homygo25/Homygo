@@ -10,6 +10,7 @@ use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\FavoritesController;
 use App\Http\Controllers\SocialSharingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserDashboardController;
 // Disabled for Real Estate focus only
 // use App\Http\Controllers\CarController;
 // use App\Http\Controllers\ContractorController;
@@ -78,9 +79,9 @@ Route::controller(AuthController::class)->group(function () {
 // Property routes
 Route::controller(PropertyController::class)->group(function () {
     Route::get('/properties', 'index')->name('properties.index');
-    Route::get('/properties/search', 'search')->name('properties.search');
+    Route::get('/properties/search', 'search')->middleware('rate.limit:search')->name('properties.search');
     Route::get('/properties/{property}', 'show')->name('properties.show');
-    Route::post('/properties/{property}/contact', 'contact')->name('properties.contact');
+    Route::post('/properties/{property}/contact', 'contact')->middleware('rate.limit:contact')->name('properties.contact');
     
     // Authenticated property routes
     Route::middleware('auth')->group(function () {
@@ -97,6 +98,79 @@ Route::controller(PropertyController::class)->group(function () {
         Route::get('/properties/{property}/analytics', 'analytics')->name('properties.analytics');
     });
 });
+
+// User Dashboard routes (Phase 6: Advanced User Experience & Analytics)
+Route::middleware('auth')->controller(UserDashboardController::class)->prefix('dashboard')->group(function () {
+    // Main dashboard
+    Route::get('/', 'index')->name('dashboard.index');
+    Route::get('/api/data', 'getDashboardStats')->name('dashboard.api.data');
+    
+    // Property Analytics
+    Route::get('/property-analytics/{property}', 'propertyAnalytics')->name('dashboard.property-analytics');
+    Route::get('/property-analytics/{property}/data', 'getPropertyAnalyticsData')->name('dashboard.property-analytics.data');
+    Route::get('/property-analytics/{property}/report', 'downloadReport')->name('dashboard.property-analytics.report');
+    
+    // Notifications Management
+    Route::get('/notifications', 'notifications')->name('dashboard.notifications');
+    Route::post('/notifications/{notification}/read', 'markNotificationAsRead')->name('dashboard.notifications.read');
+    Route::post('/notifications/mark-all-read', 'markAllNotificationsAsRead')->name('dashboard.notifications.mark-all-read');
+    Route::get('/notifications/{notification}', 'getNotification')->name('dashboard.notifications.show');
+    Route::delete('/notifications/{notification}', 'deleteNotification')->name('dashboard.notifications.delete');
+    Route::get('/notifications/count', 'getNotificationCount')->name('dashboard.notifications.count');
+    Route::post('/notification-preferences', 'updateNotificationPreferences')->name('dashboard.notification-preferences');
+    
+    // Saved Searches Management
+    Route::get('/saved-searches', 'savedSearches')->name('dashboard.saved-searches');
+    Route::get('/saved-searches/{savedSearch}', 'getSavedSearch')->name('dashboard.saved-searches.show');
+    Route::put('/saved-searches/{savedSearch}', 'updateSavedSearch')->name('dashboard.saved-searches.update');
+    Route::delete('/saved-searches/{savedSearch}', 'deleteSavedSearch')->name('dashboard.saved-searches.delete');
+    Route::put('/saved-searches/{savedSearch}/notifications', 'toggleSavedSearchNotifications')->name('dashboard.saved-searches.notifications');
+    Route::get('/saved-searches/{savedSearch}/matches', 'getSavedSearchMatches')->name('dashboard.saved-searches.matches');
+    
+    // Inquiry Management
+    Route::get('/inquiries/{inquiry}', 'getInquiry')->name('dashboard.inquiries.show');
+    Route::put('/inquiries/{inquiry}/status', 'updateInquiryStatus')->name('dashboard.inquiries.status');
+});
+
+// CDO-specific routes
+Route::get('/cdo-properties', function () {
+    $properties = collect(); // Will be populated from database
+    return view('cdo-properties', compact('properties'));
+})->name('cdo.properties');
+
+Route::get('/cdo-property/{id}', function ($id) {
+    // Mock property data for demonstration
+    $property = (object)[
+        'id' => $id,
+        'title' => 'Beautiful Family Home in Cagayan de Oro',
+        'price' => 2500000,
+        'status' => 'for_sale',
+        'property_type' => 'house',
+        'bedrooms' => 3,
+        'bathrooms' => 2,
+        'area' => 120,
+        'address' => 'Cogon, Cagayan de Oro City',
+        'description' => 'This beautiful family home is located in the peaceful neighborhood of Cogon, Cagayan de Oro City. Perfect for families looking for a comfortable and secure living environment.',
+        'images' => [],
+        'features' => [
+            'Air Conditioning',
+            'Parking Space',
+            'Security',
+            'Water Supply',
+            'Electricity',
+            'Internet Ready'
+        ],
+        'contact_phone' => '+639123456789',
+        'contact_email' => 'info@homygocdo.com'
+    ];
+    
+    return view('property-detail-cdo', compact('property'));
+})->name('cdo.property.show');
+
+// CDO Platform Demo Route
+Route::get('/cdo-demo', function () {
+    return view('cdo-demo');
+})->name('cdo.demo');
 
 // Enhanced Image upload routes
 Route::middleware('auth')->controller(ImageUploadController::class)->group(function () {
@@ -203,6 +277,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/add-car', function () { return view('add-car'); })->name('add-car');
 });
 */
+
+// Health check and monitoring routes
+Route::controller(\App\Http\Controllers\HealthController::class)->group(function () {
+    Route::get('/health', 'check')->name('health.check');
+    Route::get('/health/status', 'status')->name('health.status');
+    Route::get('/health/metrics', 'metrics')->name('health.metrics');
+    Route::get('/ping', 'ping')->name('health.ping');
+});
 
 // Error pages
 Route::get('/404', function () { return view('404-icon'); })->name('404');

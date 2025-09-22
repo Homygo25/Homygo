@@ -1,6 +1,37 @@
 <?php
 
-use Illuminate\Support\Str;
+// Polyfill for env() function
+if (!function_exists('env')) {
+    function env($key, $default = null) {
+        $value = getenv($key);
+        if ($value === false) {
+            return $default;
+        }
+        return $value;
+    }
+}
+
+// Polyfill for database_path() function
+if (!function_exists('database_path')) {
+    function database_path($path = '') {
+        return __DIR__ . '/../database' . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+    }
+}
+
+// Polyfill for Str::slug
+if (!class_exists('Str')) {
+    class Str {
+        public static function slug($string, $separator = '-') {
+            $string = preg_replace('~[^\pL\d]+~u', $separator, $string);
+            $string = iconv('utf-8', 'us-ascii//TRANSLIT', $string);
+            $string = preg_replace('~[^-\w]+~', '', $string);
+            $string = trim($string, $separator);
+            $string = preg_replace('~-+~', $separator, $string);
+            $string = strtolower($string);
+            return empty($string) ? 'n-a' : $string;
+        }
+    }
+}
 
 return [
 

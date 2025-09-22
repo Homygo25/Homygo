@@ -8,78 +8,78 @@
 
 <div class="advanced-search-component">
     <form method="GET" action="{{ route('properties.index') }}" class="bg-body border rounded-4 p-2" id="property-search-form">
-        <div class="row g-0 p-1">
-            <div class="col-lg-7">
-                <div class="row g-0">
-                    <!-- Sale/Rent Type -->
-                    <div class="col-6 col-md-4 d-flex">
-                        <div class="w-100">
-                            <select name="type" class="form-select form-select-lg border-0 ps-3" aria-label="Rent or sale select">
-                                <option value="">Any Type</option>
-                                <option value="rent" {{ request('type') == 'rent' ? 'selected' : '' }}>For Rent</option>
-                                <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>For Sale</option>
-                                <option value="lease" {{ request('type') == 'lease' ? 'selected' : '' }}>For Lease</option>
-                            </select>
-                        </div>
-                        <hr class="vr m-0">
-                    </div>
-                    
-                    <!-- Location -->
-                    <div class="col-6 col-md-4 d-flex">
-                        <div class="w-100">
-                            <select name="location_id" class="form-select form-select-lg border-0" aria-label="Location select">
-                                <option value="">Any Location</option>
-                                @foreach($locations as $location)
-                                    <option value="{{ $location->id }}" {{ request('location_id') == $location->id ? 'selected' : '' }}>
-                                        {{ $location->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <hr class="vr d-none d-md-block m-0">
-                    </div>
-                    
-                    <!-- Property Type -->
-                    <div class="col-md-4 d-flex">
-                        <div class="w-100">
-                            <hr class="d-md-none my-2">
-                            <select name="property_type" class="form-select form-select-lg border-0 ps-3" aria-label="Property type select">
-                                <option value="">Any Property</option>
-                                <option value="house" {{ request('property_type') == 'house' ? 'selected' : '' }}>Houses</option>
-                                <option value="apartment" {{ request('property_type') == 'apartment' ? 'selected' : '' }}>Apartments</option>
-                                <option value="condo" {{ request('property_type') == 'condo' ? 'selected' : '' }}>Condos</option>
-                                <option value="townhouse" {{ request('property_type') == 'townhouse' ? 'selected' : '' }}>Townhouses</option>
-                                <option value="commercial" {{ request('property_type') == 'commercial' ? 'selected' : '' }}>Commercial</option>
-                                <option value="office" {{ request('property_type') == 'office' ? 'selected' : '' }}>Offices</option>
-                                <option value="land" {{ request('property_type') == 'land' ? 'selected' : '' }}>Land</option>
-                            </select>
-                        </div>
-                        <hr class="vr d-none d-lg-block m-0">
-                    </div>
+        <div class="row g-0 p-1 align-items-center">
+            <div class="col-lg-8">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-0 ps-3"><i class="fi-map-pin"></i></span>
+                    <input type="text" name="location" id="location-autocomplete" class="form-control border-0" autocomplete="off" placeholder="Enter location (e.g. CDO, Carmen, Lapasan)" value="{{ request('location') }}">
+                    <div id="location-suggestions" class="list-group position-absolute w-100" style="z-index: 1000; display: none;"></div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('location-autocomplete');
+    const suggestions = document.getElementById('location-suggestions');
+    let debounceTimeout;
+
+    input.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(debounceTimeout);
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            suggestions.innerHTML = '';
+            return;
+        }
+        debounceTimeout = setTimeout(() => {
+            fetch(`/api/location-suggest?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    suggestions.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(loc => {
+                            const item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.textContent = loc;
+                            item.onclick = () => {
+                                input.value = loc;
+                                suggestions.style.display = 'none';
+                                suggestions.innerHTML = '';
+                            };
+                            suggestions.appendChild(item);
+                        });
+                        suggestions.style.display = 'block';
+                    } else {
+                        suggestions.style.display = 'none';
+                    }
+                });
+        }, 200);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.style.display = 'none';
+        }
+    });
+});
+</script>
+@endpush
                 </div>
             </div>
-            
-            <hr class="d-lg-none mt-2 mb-0">
-            
-            <!-- Advanced Filters -->
-            <div class="col-lg-5 d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3 pt-3 pt-lg-0 ps-lg-3">
-                <div class="d-flex align-items-center w-100 gap-2 ps-2 ps-lg-0">
+            <div class="col-lg-3 mt-3 mt-lg-0">
+                <div class="d-flex align-items-center w-100 gap-2">
                     <span class="text-nowrap">Price Range</span>
-                    <div class="price-range-inputs d-flex gap-2 w-100">
-                        <input type="number" name="price_min" class="form-control form-control-sm" 
-                               placeholder="Min" value="{{ request('price_min') }}" min="0">
-                        <span class="align-self-center">-</span>
-                        <input type="number" name="price_max" class="form-control form-control-sm" 
-                               placeholder="Max" value="{{ request('price_max') }}" min="0">
-                    </div>
+                    <input type="number" name="price_min" class="form-control form-control-sm" placeholder="Min" value="{{ request('price_min') }}" min="0">
+                    <span class="align-self-center">-</span>
+                    <input type="number" name="price_max" class="form-control form-control-sm" placeholder="Max" value="{{ request('price_max') }}" min="0">
                 </div>
-                <button type="submit" class="btn btn-lg btn-primary">
-                    Search
-                    <i class="fi-search fs-lg ms-2 me-n1"></i>
+            </div>
+            <div class="col-lg-1 mt-3 mt-lg-0 d-flex align-items-center justify-content-end">
+                <button type="submit" class="btn btn-lg btn-primary w-100">
+                    <i class="fi-search fs-lg me-2"></i>Search
                 </button>
             </div>
         </div>
-        
+
         <!-- Advanced Filters Collapse -->
         <div class="collapse" id="advancedFilters">
             <hr class="my-3">
@@ -96,7 +96,7 @@
                         @endfor
                     </select>
                 </div>
-                
+
                 <!-- Bathrooms -->
                 <div class="col-md-3">
                     <label class="form-label">Bathrooms</label>
@@ -109,14 +109,14 @@
                         @endfor
                     </select>
                 </div>
-                
+
                 <!-- Area Range -->
                 <div class="col-md-3">
                     <label class="form-label">Min Area (sqft)</label>
-                    <input type="number" name="area_min" class="form-control" 
+                    <input type="number" name="area_min" class="form-control"
                            placeholder="Min sqft" value="{{ request('area_min') }}" min="0">
                 </div>
-                
+
                 <!-- Category -->
                 <div class="col-md-3">
                     <label class="form-label">Category</label>
@@ -129,15 +129,15 @@
                         @endforeach
                     </select>
                 </div>
-                
+
                 <!-- Keyword Search -->
                 <div class="col-md-6">
                     <label class="form-label">Keywords</label>
-                    <input type="text" name="q" class="form-control" 
-                           placeholder="Search by title, description, or address..." 
+                    <input type="text" name="q" class="form-control"
+                           placeholder="Search by title, description, or address..."
                            value="{{ request('q') }}">
                 </div>
-                
+
                 <!-- Sort By -->
                 <div class="col-md-3">
                     <label class="form-label">Sort By</label>
@@ -149,7 +149,7 @@
                         <option value="area_large" {{ request('sort') == 'area_large' ? 'selected' : '' }}>Largest Area</option>
                     </select>
                 </div>
-                
+
                 <!-- Clear Filters -->
                 <div class="col-md-3 d-flex align-items-end">
                     <a href="{{ route('properties.index') }}" class="btn btn-outline-secondary w-100">
@@ -158,11 +158,11 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Toggle Advanced Filters -->
         <div class="text-center mt-3">
-            <button type="button" class="btn btn-link text-decoration-none p-0" 
-                    data-bs-toggle="collapse" data-bs-target="#advancedFilters" 
+            <button type="button" class="btn btn-link text-decoration-none p-0"
+                    data-bs-toggle="collapse" data-bs-target="#advancedFilters"
                     aria-expanded="false" aria-controls="advancedFilters">
                 <span class="advanced-toggle-text">More Filters</span>
                 <i class="fi-chevron-down ms-1"></i>
@@ -194,12 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle advanced filters toggle text
     const toggleButton = document.querySelector('[data-bs-toggle="collapse"]');
     const toggleText = document.querySelector('.advanced-toggle-text');
-    
+
     if (toggleButton && toggleText) {
         document.getElementById('advancedFilters').addEventListener('shown.bs.collapse', function() {
             toggleText.textContent = 'Less';
         });
-        
+
         document.getElementById('advancedFilters').addEventListener('hidden.bs.collapse', function() {
             toggleText.textContent = 'More';
         });
